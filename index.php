@@ -1,0 +1,189 @@
+<?php
+include 'config.php';
+// Fetch latest news
+$stmt = $conn->prepare("SELECT id, title, content, media_file, `date` FROM news ORDER BY `date` DESC LIMIT 10");
+$stmt->execute();
+$result = $stmt->get_result();
+$news = $result->fetch_all(MYSQLI_ASSOC);
+?>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Yayasan Jalan Harapan Indonesia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- HEADER -->
+<header style="background:#222;color:#fff;padding:12px 20px;position:sticky;top:0;z-index:1000;">
+  <div style="max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+    
+    <!-- Logo -->
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="logo.png" alt="Logo Yayasan" style="height:40px;width:40px;object-fit:contain;">
+      <h1 style="margin:0;font-size:20px;">Yayasan Jalan Harapan Indonesia</h1>
+    </div>
+
+    <!-- Menu Navigasi -->
+    <nav>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;gap:20px;flex-wrap:wrap;">
+        <li><a href="#about" style="color:#ccc;text-decoration:none;">Tentang</a></li>
+        <li><a href="#news" style="color:#ccc;text-decoration:none;">Berita</a></li>
+        <li><a href="#contact" style="color:#ccc;text-decoration:none;">Kontak</a></li>
+        <li><a href="login.php" style="color:#fff;background:#e67e22;padding:6px 12px;border-radius:4px;text-decoration:none;">Login</a></li>
+      </ul>
+    </nav>
+
+  </div>
+</header>
+
+
+  <main class="container" id="home">
+    <section class="hero">
+      <div style="flex:1">
+        <h1>Memberi Harapan, Mengubah Hidup</h1>
+        <p style="color:var(--muted)">Yayasan Jalan Harapan Indonesia berkomitmen untuk mendukung pendidikan, kesehatan, dan pemberdayaan komunitas rentan di seluruh Indonesia.</p>
+        <div style="margin-top:18px;display:flex;gap:12px">
+          <a class="cta" href="#programs">Lihat Program</a>
+          <a href="#about" style="padding:10px 14px;border-radius:10px;background:transparent;border:1px solid #e6edf3">Tentang Kami</a>
+        </div>
+      </div>
+      <aside style="width:360px">
+        <div class="card">
+          <h3 style="margin-top:0">Donasi Sekarang</h3>
+          <p style="color:var(--muted)">Dukung program kami agar lebih banyak keluarga menerima bantuan.</p>
+          <div style="margin-top:12px;text-align:center;color:var(--muted)">Nomor Rekening: <strong>123-456-789 (Bank Contoh)</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="about">
+      <h2>Tentang Kami</h2>
+      <p>Yayasan Jalan Harapan Indonesia didirikan untuk membantu anak-anak dan keluarga yang membutuhkan melalui program pendidikan, kesehatan, serta pelatihan keterampilan.</p>
+    </section>
+
+    <section id="programs">
+      <h2>Program Kami</h2>
+      <div class="grid-3">
+        <div class="program">
+          <h3>Beasiswa Pendidikan</h3>
+          <p style="color:var(--muted)">Menyediakan dukungan biaya pendidikan untuk siswa pra-sejahtera.</p>
+        </div>
+        <div class="program">
+          <h3>Klinik Keliling</h3>
+          <p style="color:var(--muted)">Layanan kesehatan dasar dan imunisasi untuk anak-anak di daerah terpencil.</p>
+        </div>
+        <div class="program">
+          <h3>Pelatihan Keterampilan</h3>
+          <p style="color:var(--muted)">Pelatihan menjahit, tata boga, dan keterampilan digital untuk pemberdayaan ekonomi.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="news">
+        <h2>Berita & Kegiatan</h2>
+        <div style="display:grid;gap:12px">
+            <?php if (count($news) == 0): ?>
+                <div class="card">Belum ada berita. Login sebagai editor untuk menambah.</div>
+            <?php else: foreach ($news as $n): ?>
+                <article class="card" style="display:flex;gap:12px;align-items:flex-start">
+                    <?php
+                    // Tentukan lokasi file sebenarnya
+                    $uploadDir = __DIR__ . 'uploads/';
+                    $fileName = !empty($n['media_file']) ? basename($n['media_file']) : '';
+                    $filePath = $uploadDir . $fileName;
+                    // Tentukan URL untuk <img>
+                    if (!empty($fileName) && file_exists('uploads/' . $n['media_file'])) {
+                        $imgSrc = 'uploads/' . rawurlencode($fileName); // gunakan URL relatif dari root
+                    } else {
+                        $imgSrc = 'https://via.placeholder.com/160x100?text=No+Image';
+                    }
+                    ?>
+                    <img src="<?php echo htmlspecialchars($imgSrc, ENT_QUOTES, 'UTF-8'); ?>"
+                        alt="erorr image"
+                        style="width:160px;height:100px;object-fit:cover;border-radius:8px">
+                    <div>
+                      <a href="berita.php?id=<?php echo $n['id']; ?>" style="text-decoration:none;color:inherit">
+                        <h4 style="margin:6px 0"><?php echo htmlspecialchars($n['title']); ?></h4>
+                      </a>
+                        <div style="color:var(--muted);font-size:13px;margin-bottom:8px">
+                            <?php echo htmlspecialchars(date('d M Y', strtotime($n['date']))); ?>
+                        </div>
+                        <p style="margin:0;color:var(--muted)">
+                          <a href="berita.php?id=<?php echo $n['id']; ?>" style="text-decoration:none;color:inherit">
+                            <?php echo nl2br(htmlspecialchars(substr($n['content'], 0, 220))); ?>
+                            <?php if (strlen($n['content']) > 220) echo '...'; ?>
+                          </a>
+                        </p>
+                    </div>
+                </article>
+            <?php endforeach; endif; ?>
+        </div>
+    </section>
+
+    <section id="contact">
+      <h2>Kontak</h2>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div style="flex:1">
+              <p>Alamat: Jl. Contoh No. 10, Jakarta</p>
+              <p>Email: <a href="mailto:info@jalanharapan.or.id">info@jalanharapan.or.id</a></p>
+              <p>Telepon: +62 21 555 0123</p>
+          </div>
+          <div style="width:360px" class="card">
+              <h4>Form Kontak</h4>
+              <form action="contact_process.php" method="POST">
+                  <input name="name" placeholder="Nama" required>
+                  <input type="email" name="email" placeholder="Email" required>
+                  <textarea name="message" rows="4" placeholder="Pesan" required></textarea>
+                  <button type="submit">Kirim Pesan</button>
+              </form>
+          </div>
+      </div>
+      <?php if (isset($_GET['success'])): ?>
+          <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px;">
+              Pesan berhasil dikirim!
+          </div>
+      <?php endif; ?>
+  </section>
+  </main>
+
+  <footer style="background:#222;color:#eee;padding:40px 20px;margin-top:40px;">
+  <div style="display:flex;flex-wrap:wrap;gap:30px;max-width:1200px;margin:auto;">
+    
+    <!-- Tentang Yayasan -->
+    <div style="flex:1;min-width:240px;">
+      <h3 style="color:#fff;margin-bottom:12px;">Yayasan Jalan Harapan Indonesia</h3>
+      <p style="color:#bbb;line-height:1.6;">
+        Bergerak dalam pelayanan sosial, pendidikan, dan kemanusiaan untuk membangun generasi yang berintegritas, beriman, dan berdaya saing.
+      </p>
+    </div>
+
+    <!-- Kontak -->
+    <div style="flex:1;min-width:200px;">
+      <h4 style="color:#fff;margin-bottom:12px;">Kontak</h4>
+      <p style="margin:6px 0;">📍 Jl. Contoh No. 10, Jakarta</p>
+      <p style="margin:6px 0;">📧 <a href="mailto:info@jalanharapan.or.id" style="color:#ccc;text-decoration:none;">info@jalanharapan.or.id</a></p>
+      <p style="margin:6px 0;">📞 +62 21 555 0123</p>
+    </div>
+
+    <!-- Tautan Cepat -->
+    <div style="flex:1;min-width:200px;">
+      <h4 style="color:#fff;margin-bottom:12px;">Tautan Cepat</h4>
+      <ul style="list-style:none;padding:0;margin:0;">
+        <li><a href="#about" style="color:#ccc;text-decoration:none;">Tentang Kami</a></li>
+        <li><a href="#news" style="color:#ccc;text-decoration:none;">Berita & Kegiatan</a></li>
+        <li><a href="#contact" style="color:#ccc;text-decoration:none;">Kontak</a></li>
+      </ul>
+    </div>
+
+  </div>
+  
+  <hr style="border:0;border-top:1px solid #444;margin:20px 0;">
+  <p style="text-align:center;color:#777;font-size:14px;">
+    &copy; <?php echo date('Y'); ?> Yayasan Jalan Harapan Indonesia. All rights reserved.
+  </p>
+</footer>
+
+</body>
+</html>
